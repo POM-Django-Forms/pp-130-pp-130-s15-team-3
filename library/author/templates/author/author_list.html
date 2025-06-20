@@ -1,0 +1,13 @@
+<h2>Author list</h2>
+<a href="{% url 'author_create' %}">Create a new author</a>
+<ul>
+  {% for author in authors %}
+    <li>
+      {{ author.name }} {{ author.surname }} {{ author.patronymic }}
+      <form method="post" action="{% url 'author_delete' author.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
