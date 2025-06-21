@@ -35,11 +35,13 @@
             {% if user.is_authenticated %}
                 <div class="d-flex gap-2">
                     {% if book.count > 0 %}
-                        <form action="{% url 'order:create_order' %}" method="post" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="book_id" value="{{ book.id }}">
-                            <button type="submit" class="btn btn-primary">Borrow This Book</button>
-                        </form>
+                    <form action="{% url 'order:create_order'%}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        {{ form }}
+                        <button type="submit" class="btn btn-primary">Borrow This Book</button>
+                    </form>
+                        
                     {% endif %}
                     <a href="{% url 'book:book_list' %}" class="btn btn-outline-secondary">Back to Books</a>
                 </div>

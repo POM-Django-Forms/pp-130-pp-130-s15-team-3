@@ -63,6 +63,7 @@
                                 <td>
                                     <form action="{% url 'order:close_order' order.id %}" method="post" class="d-inline">
                                         {% csrf_token %}
+                                        {{form.as_p}}
                                         <button type="submit" class="btn btn-sm btn-success" 
                                                 onclick="return confirm('Mark this book as returned?')">
                                             Returned

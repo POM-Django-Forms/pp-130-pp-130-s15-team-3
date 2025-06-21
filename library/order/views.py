@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from book.models import Book
 from .models import Order
+from .forms import OrderCreateForm, OrderCloseForm
 
 User = get_user_model()
 
@@ -13,43 +14,82 @@ User = get_user_model()
 @login_required
 def create_order(request):
     if request.method == 'POST':
-        book_id = request.POST.get('book_id')
-        if not book_id:
-            messages.error(request, 'No book specified.')
-            return redirect('book:book_list')
-            
-        book = get_object_or_404(Book, id=book_id)
+        form = OrderCreateForm(request.POST)
+        if form.is_valid():
+
+            book_id =request.POST.get('book_id')
+            if not book_id:
+                messages.error(request, 'No book specified.')
+                return redirect('book:book_list')
+            book = get_object_or_404(Book, id=book_id)
+            if book.count <= 0:
+                messages.error(request, 'This book is currently out of stock.')
+                return redirect('book:book_detail', book_id=book.id)
         
-        if book.count <= 0:
-            messages.error(request, 'This book is currently out of stock.')
-            return redirect('book:book_detail', book_id=book.id)
+            existing_order = Order.objects.filter(
+                user=request.user, 
+                book=book, 
+                end_at__isnull=True).exists()
         
-        # Check if user already has this book
-        existing_order = Order.objects.filter(
-            user=request.user, 
-            book=book, 
-            end_at__isnull=True
-        ).exists()
+            if existing_order:
+                messages.warning(request, 'You have already borrowed this book.')
+                return redirect('book:book_detail', book_id=book.id)
+            order = form.save(commit=False)
+            order.user=request.user
+            order.book=book
+            order.plated_end_at=timezone.now() + timedelta(days=14)
+            order.save()
         
-        if existing_order:
-            messages.warning(request, 'You have already borrowed this book.')
-            return redirect('book:book_detail', book_id=book.id)
+            book.count -= 1
+            book.save()
         
-        # Create the order
-        order = Order.objects.create(
-            user=request.user,
-            book=book,
-            plated_end_at=timezone.now() + timedelta(days=14)  # 2 weeks to return
-        )
-        
-        # Decrease book count
-        book.count -= 1
-        book.save()
-        
-        messages.success(request, f'You have successfully borrowed "{book.name}". Please return it by {order.plated_end_at.strftime("%B %d, %Y")}.')
-        return redirect('order:my_orders')
+            messages.success(request, f'You have successfully borrowed "{book.name}". Please return it by {order.plated_end_at.strftime("%B %d, %Y")}.')
+            return redirect('order:my_orders')
+        else:
+            messages.error(request, 'Invalid submission. Please try again.')
     
-    return redirect('book:book_list')
+    
+    form = OrderCreateForm()
+
+    return render(request, 'book_detail.html', {'form': form})    
+    # if request.method == 'POST':
+    #     book_id = request.POST.get('book_id')
+    #     if not book_id:
+    #         messages.error(request, 'No book specified.')
+    #         return redirect('book:book_list')
+            
+    #     book = get_object_or_404(Book, id=book_id)
+        
+    #     if book.count <= 0:
+    #         messages.error(request, 'This book is currently out of stock.')
+    #         return redirect('book:book_detail', book_id=book.id)
+        
+    #     # Check if user already has this book
+    #     existing_order = Order.objects.filter(
+    #         user=request.user, 
+    #         book=book, 
+    #         end_at__isnull=True
+    #     ).exists()
+        
+    #     if existing_order:
+    #         messages.warning(request, 'You have already borrowed this book.')
+    #         return redirect('book:book_detail', book_id=book.id)
+        
+    #     # Create the order
+    #     order = Order.objects.create(
+    #         user=request.user,
+    #         book=book,
+    #         plated_end_at=timezone.now() + timedelta(days=14)  # 2 weeks to return
+    #     )
+        
+    #     # Decrease book count
+    #     book.count -= 1
+    #     book.save()
+        
+    #     messages.success(request, f'You have successfully borrowed "{book.name}". Please return it by {order.plated_end_at.strftime("%B %d, %Y")}.')
+    #     return redirect('order:my_orders')
+    
+    # return redirect('book:book_list')
 
 
 @login_required
@@ -84,24 +124,36 @@ def all_orders(request):
 
 @login_required
 def close_order(request, order_id):
-    if not request.user.is_librarian:
-        messages.error(request, 'You do not have permission to perform this action.')
-        return redirect('book:book_list')
-    
-    order = get_object_or_404(Order, id=order_id, end_at__isnull=True)
-    
     if request.method == 'POST':
-        # Mark order as returned
+        order = get_object_or_404(Order, id=order_id, end_at__isnull=True)
         order.end_at = timezone.now()
         order.save()
         
-        # Increase book count
         book = order.book
         book.count += 1
         book.save()
-        
-        messages.success(request, f'Order #{order.id} has been closed. Book "{book.name}" is now available.')
         return redirect('order:all_orders')
+
+    form = OrderCloseForm()
+    return render(request, 'order/close_order_confirm.html', {'form': form})
+    # if not request.user.is_librarian:
+    #     messages.error(request, 'You do not have permission to perform this action.')
+    #     return redirect('book:book_list')
+    
+    # order = get_object_or_404(Order, id=order_id, end_at__isnull=True)
+    
+    # if request.method == 'POST':
+    #     # Mark order as returned
+    #     order.end_at = timezone.now()
+    #     order.save()
+        
+    #     # Increase book count
+    #     book = order.book
+    #     book.count += 1
+    #     book.save()
+        
+    #     messages.success(request, f'Order #{order.id} has been closed. Book "{book.name}" is now available.')
+    #     return redirect('order:all_orders')
 
 
 @login_required
