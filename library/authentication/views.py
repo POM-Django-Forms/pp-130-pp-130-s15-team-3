@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, get_backends
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from .models import CustomUser
@@ -76,7 +76,7 @@ def register_view(request):
         form = CustomUserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Registration successful! Welcome to the library.')
             return redirect(request.POST.get('next') or 'book:book_list')
     else:
