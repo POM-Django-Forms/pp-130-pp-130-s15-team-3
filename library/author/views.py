@@ -49,6 +49,7 @@ def author_edit_view(request, author_id):
         
     return render(request, 'author/author_form.html', {'form': form, 'title': 'Edit Author'})
 
+@user_passes_test(is_librarian)
 def author_detail_view(request, author_id):
     author = get_object_or_404(Author, pk=author_id)
     return render(request, 'author/author_detail.html', {'author': author})
