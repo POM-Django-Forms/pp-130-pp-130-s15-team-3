@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ author.name }} {{ author.surname }} - Library{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'author:author_list' %}">Authors</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ author.name }} {{ author.surname }}</li>
+                </ol>
+            </nav>
+            
+            <h1>{{ author.name }} {{ author.surname }}</h1>
+            
+            <div class="mb-4">
+                <p><strong>Patronymic:</strong> {% if author.patronymic %}{{ author.patronymic }}{% else %}—{% endif %}</p>
+                
+                <h4>Books by this author</h4>
+                <ul>
+                    {% for book in author.books.all %}
+                        <li><a href="{% url 'book:book_detail' book.id %}">{{ book.name }}</a></li>
+                    {% empty %}
+                        <li>No books found.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <a href="{% url 'author:author_list' %}" class="btn btn-outline-secondary">Back to Authors</a>
+        </div>
+    </div>
+{% endblock %}

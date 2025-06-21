@@ -47,7 +47,7 @@ AUTH_USER_MODEL = 'authentication.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication settings
-LOGIN_URL = 'login'
+LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = 'book:book_list'
 LOGOUT_REDIRECT_URL = 'book:book_list'
 

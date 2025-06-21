@@ -12,9 +12,10 @@ urlpatterns = [
     path('auth/', include('authentication.urls', namespace='authentication')),
     
     # App URLs
-    path('', include('book.urls', namespace='book')),
-    path('orders/', include('order.urls', namespace='order')),
-    path('authors/', include('author.urls')),
+    path('', include(('book.urls', 'book'), namespace='book')),
+    path('orders/', include(('order.urls', 'order'), namespace='order')),
+    path('authors/', include(('author.urls', 'author'), namespace='author')),
+
     
     # Alias for better user experience
     path('books/', include(('book.urls', 'book'), namespace='book_alias')),  # Allow /books/ as an alternative to /
